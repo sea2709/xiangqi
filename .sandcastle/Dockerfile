@@ -7,19 +7,13 @@ RUN apt-get update && apt-get install -y \
   jq \
   && rm -rf /var/lib/apt/lists/*
 
-# Install system dependencies for Beads
-RUN apt-get update && apt-get install -y \
-  dpkg-dev \
-  libicu72 \
-  && rm -rf /var/lib/apt/lists/* \
-  && ARCH_DIR=$(dpkg-architecture -qDEB_HOST_MULTIARCH) \
-  && for lib in /usr/lib/$ARCH_DIR/libicu*.so.72; do \
-       ln -s "$lib" "${lib%.72}.74"; \
-     done
-
-RUN curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-
-RUN corepack enable
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+  | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+  | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && apt-get update && apt-get install -y gh \
+  && rm -rf /var/lib/apt/lists/*
 
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
